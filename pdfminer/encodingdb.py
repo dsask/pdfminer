@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+import struct
 from .psparser import PSLiteral
 from .glyphlist import glyphname2unicode
 from .latin_enc import ENCODING
@@ -15,9 +16,21 @@ def name2unicode(name):
     if name in glyphname2unicode:
         return glyphname2unicode[name]
     m = STRIP_NAME.search(name)
+    decompose_pattern = re.compile(r'([0-9]{3})+')
+    m = decompose_pattern.findall(name)
     if not m:
         raise KeyError(name)
-    return unichr(int(m.group(0)))
+    result_str = u''
+    for match in m:
+        result_str += safe_unichr(int(match))
+
+    return result_str
+
+def safe_unichr(i):
+    try:
+        return unichr(i)
+    except ValueError:
+        return struct.pack('i', i).decode('utf-32')
 
 
 ##  EncodingDB
